@@ -1,7 +1,7 @@
 mod movie_converter;
 
 use clap::{Parser, Subcommand};
-use movie_converter::read_txt_file_to_json;
+use movie_converter::convert_txt_to_json;
 use std::{error::Error, path::PathBuf};
 
 #[derive(Parser)]
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Convert { input } => {
-            let saved_path = read_txt_file_to_json(&input)?;
+            let saved_path = convert_txt_to_json(&input)?;
             println!("Saved path: {}", saved_path.display());
         }
     }

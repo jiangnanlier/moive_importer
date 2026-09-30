@@ -4,7 +4,7 @@ use std::{
 };
 
 /// 将文件转换为 JSON 格式并返回存放路径。
-pub fn read_txt_file_to_json(file_path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn convert_txt_to_json(file_path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let txt = fs::read_to_string(file_path)?;
     let mut movies = Vec::new();
     let mut disc_number = 0;
@@ -18,17 +18,17 @@ pub fn read_txt_file_to_json(file_path: &Path) -> Result<PathBuf, Box<dyn std::e
             continue;
         }
 
-        let fields: Vec<&str> = line.split_whitespace().collect();
-        let Ok(year) = fields.first().unwrap_or(&"").parse::<u32>() else {
+        let mut fields = line.split_whitespace();
+        let Some(year_text) = fields.next() else {
             continue;
         };
-        let details = &fields[1..];
+        let Ok(year) = year_text.parse::<u32>() else {
+            continue;
+        };
+        let details: Vec<&str> = fields.collect();
         let english_start = details
             .iter()
-            .position(|word| {
-                word.chars()
-                    .any(|character| character.is_ascii_alphabetic())
-            })
+            .position(|word| word.bytes().any(|byte| byte.is_ascii_alphabetic()))
             .unwrap_or(details.len());
         let chinese_title = details[..english_start].join(" ");
         let filename = details[english_start..].join(" ");
@@ -48,7 +48,7 @@ pub fn read_txt_file_to_json(file_path: &Path) -> Result<PathBuf, Box<dyn std::e
 
 #[cfg(test)]
 mod tests {
-    use super::read_txt_file_to_json;
+    use super::convert_txt_to_json;
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -64,7 +64,7 @@ mod tests {
         )
         .unwrap();
 
-        let output_path = read_txt_file_to_json(&input_path).unwrap();
+        let output_path = convert_txt_to_json(&input_path).unwrap();
         let output: serde_json::Value =
             serde_json::from_slice(&std::fs::read(&output_path).unwrap()).unwrap();
 
